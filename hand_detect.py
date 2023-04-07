@@ -69,6 +69,12 @@ def h_gesture(angle_list):
     return gesture_str
 
 def detect():
+    
+    # 初始化计时器
+    start_time = cv2.getTickCount()
+    frame_count = 0
+    fps=0
+
     mp_drawing = mp.solutions.drawing_utils
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
@@ -83,6 +89,21 @@ def detect():
         frame= cv2.flip(frame,1)  # 镜像翻转
         results = hands.process(frame)
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        # 计算帧率
+        frame_count += 1
+        end_time = cv2.getTickCount()
+        elapsed_time = (end_time - start_time) / cv2.getTickFrequency()
+
+        if elapsed_time > 1:  # 每秒更新一次帧率
+            fps = frame_count / elapsed_time
+            # 绘制帧率文本
+            # 重置计时器和帧数
+            start_time = end_time
+            frame_count = 0
+
+        
+        cv2.putText(frame, "FPS: {:.2f}".format(fps), (450, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
@@ -99,7 +120,7 @@ def detect():
                     gesture_str = h_gesture(angle_list)
                     cv2.putText(frame,gesture_str,(0,100),0,1.3,(0,0,255),3)
         cv2.imshow('MediaPipe Hands', frame)
-        if cv2.waitKey(1) & 0xFF == 27:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
     cap.release()
 
